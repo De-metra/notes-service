@@ -1,0 +1,699 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Note Service</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: 'Segoe UI', system-ui, -apple-system, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .app-container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 40px;
+            color: white;
+        }
+
+        .header h1 {
+            font-size: 3rem;
+            margin-bottom: 10px;
+            text-shadow: 2px 2px 4px rgba(0,0,0,0.3);
+        }
+
+        .header p {
+            font-size: 1.2rem;
+            opacity: 0.9;
+        }
+
+        .main-content {
+            display: grid;
+            grid-template-columns: 350px 1fr;
+            gap: 30px;
+            align-items: start;
+        }
+
+        /* Панель создания заметки */
+        .create-panel {
+            background: white;
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+            position: sticky;
+            top: 20px;
+        }
+
+        .create-panel h2 {
+            color: #333;
+            margin-bottom: 25px;
+            font-size: 1.5rem;
+            border-bottom: 3px solid #667eea;
+            padding-bottom: 10px;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        .form-group label {
+            display: block;
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #555;
+        }
+
+        .form-control {
+            width: 100%;
+            padding: 12px 15px;
+            border: 2px solid #e1e5e9;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+
+        .form-control:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+
+        textarea.form-control {
+            min-height: 120px;
+            resize: vertical;
+        }
+
+        .btn {
+            padding: 12px 25px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #667eea, #764ba2);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.4);
+        }
+
+        .btn-secondary {
+            background: #f8f9fa;
+            color: #666;
+            border: 2px solid #e1e5e9;
+        }
+
+        .btn-secondary:hover {
+            background: #e9ecef;
+        }
+
+        .form-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 25px;
+        }
+
+        /* Панель управления */
+        .controls-panel {
+            background: white;
+            border-radius: 15px;
+            padding: 20px;
+            margin-bottom: 20px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            display: flex;
+            gap: 15px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+
+        .search-box {
+            flex: 1;
+            min-width: 200px;
+            position: relative;
+        }
+
+        .search-box input {
+            padding-left: 40px;
+        }
+
+        .search-icon {
+            position: absolute;
+            left: 15px;
+            top: 50%;
+            transform: translateY(-50%);
+            color: #666;
+        }
+
+        .filter-buttons {
+            display: flex;
+            gap: 8px;
+        }
+
+        .filter-btn {
+            padding: 10px 20px;
+            border: 2px solid #e1e5e9;
+            background: white;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 500;
+            transition: all 0.3s ease;
+        }
+
+        .filter-btn.active {
+            background: #667eea;
+            color: white;
+            border-color: #667eea;
+        }
+
+        /* Сетка заметок */
+        .notes-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            gap: 20px;
+        }
+
+        .note-card {
+            background: white;
+            border-radius: 15px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+            transition: all 0.3s ease;
+            border-left: 5px solid #667eea;
+            position: relative;
+        }
+
+        .note-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 10px 25px rgba(0,0,0,0.15);
+        }
+
+        .note-card.archived {
+            border-left-color: #ff6b6b;
+            opacity: 0.8;
+        }
+
+        .note-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+
+        .note-title {
+            font-size: 1.3rem;
+            font-weight: 700;
+            color: #333;
+            line-height: 1.3;
+            margin-right: 10px;
+        }
+
+        .note-badge {
+            background: #ff6b6b;
+            color: white;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .note-content {
+            color: #666;
+            line-height: 1.5;
+            margin-bottom: 20px;
+            max-height: 100px;
+            overflow: hidden;
+        }
+
+        .note-meta {
+            font-size: 0.9rem;
+            color: #999;
+            margin-bottom: 20px;
+            border-top: 1px solid #f0f0f0;
+            padding-top: 15px;
+        }
+
+        .note-actions {
+            display: flex;
+            gap: 10px;
+        }
+
+        .action-btn {
+            flex: 1;
+            padding: 8px 15px;
+            border: none;
+            border-radius: 8px;
+            font-size: 0.9rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 5px;
+        }
+
+        .edit-btn {
+            background: #e3f2fd;
+            color: #1976d2;
+        }
+
+        .edit-btn:hover {
+            background: #bbdefb;
+        }
+
+        .archive-btn {
+            background: #fff3e0;
+            color: #f57c00;
+        }
+
+        .archive-btn:hover {
+            background: #ffe0b2;
+        }
+
+        .delete-btn {
+            background: #ffebee;
+            color: #d32f2f;
+        }
+
+        .delete-btn:hover {
+            background: #ffcdd2;
+        }
+
+        /* Состояние пустого списка */
+        .empty-state {
+            grid-column: 1 / -1;
+            text-align: center;
+            padding: 60px 20px;
+            color: #666;
+        }
+
+        .empty-state h3 {
+            font-size: 1.5rem;
+            margin-bottom: 10px;
+            color: #333;
+        }
+
+        /* Адаптивность */
+        @media (max-width: 768px) {
+            .main-content {
+                grid-template-columns: 1fr;
+            }
+
+            .create-panel {
+                position: static;
+            }
+
+            .controls-panel {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .search-box {
+                min-width: auto;
+            }
+
+            .notes-grid {
+                grid-template-columns: 1fr;
+            }
+        }
+
+        /* Анимации */
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .note-card {
+            animation: fadeIn 0.5s ease;
+        }
+    </style>
+</head>
+<body>
+    <div class="app-container">
+        <header class="header">
+            <h1>📝 Note Service</h1>
+        </header>
+
+        <div class="main-content">
+            <!-- Левая панель - создание заметки -->
+            <aside class="create-panel">
+                <h2 id="formTitle">Новая заметка</h2>
+                <form id="noteForm">
+                    <div class="form-group">
+                        <label for="title">Заголовок</label>
+                        <input type="text" id="title" class="form-control" placeholder="Введите заголовок..." required maxlength="255">
+                    </div>
+                    <div class="form-group">
+                        <label for="content">Содержание</label>
+                        <textarea id="content" class="form-control" placeholder="Напишите свою заметку..."></textarea>
+                    </div>
+                    <div class="form-actions">
+                        <button type="submit" id="submitBtn" class="btn btn-primary">
+                            <span>📌</span>
+                            <span id="submitText">Создать заметку</span>
+                        </button>
+                        <button type="button" id="cancelBtn" class="btn btn-secondary" style="display: none;">
+                            <span>❌</span>
+                            Отмена
+                        </button>
+                    </div>
+                </form>
+            </aside>
+
+            <!-- Правая часть - список заметок -->
+            <main class="notes-section">
+                <!-- Панель управления -->
+                <div class="controls-panel">
+                    <div class="search-box">
+                        <span class="search-icon">🔍</span>
+                        <input type="text" id="searchInput" class="form-control" placeholder="Поиск по заметкам...">
+                    </div>
+                    <div class="filter-buttons">
+                        <button id="showAll" class="filter-btn active">Все</button>
+                        <button id="showActive" class="filter-btn">Активные</button>
+                        <button id="showArchived" class="filter-btn">Архив</button>
+                    </div>
+                </div>
+
+                <!-- Сетка заметок -->
+                <div id="notesContainer" class="notes-grid">
+                    <div class="empty-state">
+                        <h3>Пока нет заметок</h3>
+                        <p>Создайте свою первую заметку, используя форму слева</p>
+                    </div>
+                </div>
+            </main>
+        </div>
+    </div>
+
+    <script>
+        class NotesApp {
+            constructor() {
+                this.notes = [];
+                this.currentFilter = 'all';
+                this.currentSearch = '';
+                this.editingNoteId = null;
+                
+                this.initializeEventListeners();
+                this.loadNotes();
+            }
+
+            initializeEventListeners() {
+                document.getElementById('noteForm').addEventListener('submit', (e) => this.handleSubmit(e));
+                document.getElementById('searchInput').addEventListener('input', (e) => this.handleSearch(e));
+                document.getElementById('showAll').addEventListener('click', () => this.setFilter('all'));
+                document.getElementById('showActive').addEventListener('click', () => this.setFilter('active'));
+                document.getElementById('showArchived').addEventListener('click', () => this.setFilter('archived'));
+            }
+
+            async loadNotes() {
+                try {
+                    let url = '/api/notes';
+                    const params = new URLSearchParams();
+                    
+                    if (this.currentFilter === 'active') params.append('archived', 'false');
+                    if (this.currentFilter === 'archived') params.append('archived', 'true');
+                    if (this.currentSearch) params.append('search', this.currentSearch);
+                    
+                    if (params.toString()) url += `?${params.toString()}`;
+                    
+                    const response = await fetch(url);
+                    this.notes = await response.json();
+                    this.renderNotes();
+                } catch (error) {
+                    console.error('Ошибка загрузки заметок:', error);
+                    this.showError('Не удалось загрузить заметки');
+                }
+            }
+
+            renderNotes() {
+                const container = document.getElementById('notesContainer');
+                
+                if (this.notes.length === 0) {
+                    container.innerHTML = `
+                        <div class="empty-state">
+                            <h3>Заметки не найдены</h3>
+                            <p>${this.currentSearch ? 'Попробуйте изменить поисковый запрос' : 'Создайте первую заметку'}</p>
+                        </div>
+                    `;
+                    return;
+                }
+
+                container.innerHTML = this.notes.map(note => this.createNoteElement(note)).join('');
+            }
+
+            createNoteElement(note) {
+                const created = note.created_at ? new Date(note.created_at).toLocaleDateString('ru-RU') : "";
+                const updated = note.updated_at ? 
+                    new Date(note.updated_at).toLocaleDateString('ru-RU') : 
+                    'Не обновлялась';
+                let contentPreview = note.content || '';
+                if (contentPreview.length > 50) {
+                    contentPreview = contentPreview.substring(0, 50) + '...';
+                }
+                const archiveIcon = note.is_archived == true ? '📤' : '📥';
+                const archiveText = note.is_archived == true ? 'Восстан.' : 'Архив';
+                
+                return `
+                    <div class="note-card ${note.is_archived ? 'archived' : ''}">
+                        <div class="note-header">
+                            <div class="note-title">${this.escapeHtml(note.title)}</div>
+                            ${note.is_archived ? '<div class="note-badge">В архиве</div>' : ''}
+                        </div>
+                        <div class="note-content">${contentPreview}</div>
+                        <div class="note-meta">
+                            <div>Создано: ${created}</div>
+                            <div>Обновлено: ${updated}</div>
+                        </div>
+                        <div class="note-actions">
+                            <button onclick="app.editNote(${note.id})" class="action-btn edit-btn">
+                                <span>✏️</span>
+                                Редакт.
+                            </button>
+                            <button onclick="app.toggleArchive(${note.id}, ${!note.is_archived})" class="action-btn archive-btn">
+                                <span>${archiveIcon}</span>
+                                ${archiveText}
+                            </button>
+                            <button onclick="app.deleteNote(${note.id})" class="action-btn delete-btn">
+                                <span>🗑️</span>
+                                Удалить
+                            </button>
+                        </div>
+                    </div>
+                `;
+            }
+
+            async handleSubmit(e) {
+                e.preventDefault();
+                
+                const title = document.getElementById('title').value.trim();
+                const content = document.getElementById('content').value.trim();
+                
+                if (!title) {
+                    this.showError('Заголовок обязателен для заполнения');
+                    return;
+                }
+
+                try {
+                    if (this.editingNoteId) {
+                        await this.updateNote(this.editingNoteId, { title, content });
+                        this.showSuccess('Заметка успешно обновлена');
+                    } else {
+                        await this.createNote({ title, content });
+                        this.showSuccess('Заметка успешно создана');
+                    }
+                    
+                    this.resetForm();
+                    await this.loadNotes();
+                } catch (error) {
+                    console.error('Ошибка сохранения заметки:', error);
+                    this.showError('Ошибка сохранения заметки');
+                }
+            }
+
+            async createNote(noteData) {
+                const response = await fetch('/api/notes', {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(noteData)
+                });
+                
+                if (!response.ok) throw new Error('Ошибка при создании заметки');
+                return response.json();
+            }
+
+            async updateNote(id, noteData) {
+                const response = await fetch(`/api/notes/${id}`, {
+                    method: 'PUT',
+                    headers: { 'Content-Type': 'application/json' },
+                    body: JSON.stringify(noteData)
+                });
+                
+                if (!response.ok) throw new Error('Ошибка при редактировании заметки');
+                return response.json();
+            }
+
+            async toggleArchive(id, isArchived) {
+                try {
+                    const response = await fetch(`/api/notes/${id}/archive`, {
+                        method: 'PATCH',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ is_archived: isArchived })
+                    });
+                    
+                    if (!response.ok) throw new Error('Ошибка при архивации заметки');
+                    
+                    this.showSuccess(isArchived ? 'Заметка перемещена в архив' : 'Заметка восстановлена из архива');
+                    await this.loadNotes();
+                } catch (error) {
+                    console.error('Ошибка при архивации заметки:', error);
+                    this.showError('Ошибка при архивации заметки');
+                }
+            }
+
+            async deleteNote(id) {
+                if (!confirm('Вы уверены, что хотите удалить эту заметку?')) return;
+                
+                try {
+                    const response = await fetch(`/api/notes/${id}`, { method: 'DELETE' });
+                    
+                    if (!response.ok) throw new Error('Ошибка при удалении заметки');
+                    
+                    this.showSuccess('Заметка успешно удалена');
+                    await this.loadNotes();
+                } catch (error) {
+                    console.error('Ошибка при удалении заметки:', error);
+                    this.showError('Ошибка при удалении заметки');
+                }
+            }
+
+            async editNote(id) {
+                const note = this.notes.find(n => n.id === id);
+                if (!note) return;
+                
+                document.getElementById('title').value = note.title;
+                document.getElementById('content').value = note.content || '';
+                this.editingNoteId = id;
+                
+                document.getElementById('formTitle').textContent = 'Редактировать заметку';
+                document.getElementById('submitText').textContent = 'Сохранить изменения';
+                document.getElementById('cancelBtn').style.display = 'inline-block';
+                
+                document.getElementById('title').focus();
+            }
+
+            resetForm() {
+                document.getElementById('noteForm').reset();
+                this.editingNoteId = null;
+                document.getElementById('formTitle').textContent = 'Новая заметка';
+                document.getElementById('submitText').textContent = 'Создать заметку';
+                document.getElementById('cancelBtn').style.display = 'none';
+            }
+
+            handleSearch(e) {
+                this.currentSearch = e.target.value;
+                clearTimeout(this.searchTimeout);
+                this.searchTimeout = setTimeout(() => this.loadNotes(), 300);
+            }
+
+            setFilter(filter) {
+                this.currentFilter = filter;
+                
+                // Обновляем активные кнопки фильтра
+                document.querySelectorAll('.filter-btn').forEach(btn => btn.classList.remove('active'));
+                document.getElementById(`show${filter.charAt(0).toUpperCase() + filter.slice(1)}`).classList.add('active');
+                
+                this.loadNotes();
+            }
+
+            escapeHtml(unsafe) {
+                return unsafe
+                    .replace(/&/g, "&amp;")
+                    .replace(/</g, "&lt;")
+                    .replace(/>/g, "&gt;")
+                    .replace(/"/g, "&quot;")
+                    .replace(/'/g, "&#039;");
+            }
+
+            showError(message) {
+                this.showNotification(message, 'error');
+            }
+
+            showSuccess(message) {
+                this.showNotification(message, 'success');
+            }
+
+            showNotification(message, type) {
+                // Временное уведомление
+                const notification = document.createElement('div');
+                notification.style.cssText = `
+                    position: fixed;
+                    top: 20px;
+                    right: 20px;
+                    padding: 15px 20px;
+                    border-radius: 10px;
+                    color: white;
+                    font-weight: 500;
+                    z-index: 1000;
+                    animation: slideIn 0.3s ease;
+                    background: ${type === 'error' ? '#ff4757' : '#2ed573'};
+                `;
+                notification.textContent = message;
+                
+                document.body.appendChild(notification);
+                
+                setTimeout(() => {
+                    notification.remove();
+                }, 3000);
+            }
+        }
+
+        const app = new NotesApp();
+
+        document.getElementById('cancelBtn').addEventListener('click', () => app.resetForm());
+
+        const style = document.createElement('style');
+        style.textContent = `
+            @keyframes slideIn {
+                from {
+                    transform: translateX(100%);
+                    opacity: 0;
+                }
+                to {
+                    transform: translateX(0);
+                    opacity: 1;
+                }
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>
