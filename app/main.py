@@ -3,6 +3,7 @@ from fastapi.staticfiles import StaticFiles
 from fastapi.responses import FileResponse
 from app.routers import notes
 
+
 app = FastAPI()
 
 app.include_router(notes.router)
